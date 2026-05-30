@@ -1,0 +1,6 @@
+{
+  "name": "Financial Report Template Builder",
+  "description": "Extracts financial context documents and produces downloadable research reports matching Geojit-style formats.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
