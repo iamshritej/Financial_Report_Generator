@@ -1,0 +1,1830 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Research Report Generator | Geojit Style</title>
+    
+    <!-- Editorial Aesthetics CDN Stack -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .serif-title {
+            font-family: 'Playfair Display', serif;
+        }
+        .mono-text {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom print-like aspect-ratio pages to map exactly to A4 */
+        .report-page {
+            width: 800px;
+            height: 1120px;
+            padding: 40px;
+            background-color: #FFFFFF;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            border-top: 6px solid #004B87;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-[#F9F9F7] text-[#1A1A1A] min-h-screen flex flex-col antialiased">
+
+    <!-- Top Editorial Navbar -->
+    <nav class="h-16 flex items-center justify-between px-8 border-b border-gray-200 bg-white shadow-sm shrink-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-[#004B87] rounded flex items-center justify-center">
+                <div class="w-4 h-4 bg-white rotate-45"></div>
+            </div>
+            <span class="font-serif italic text-xl font-bold tracking-tight">
+                ResearchEngine<span class="text-[#004B87]">.py</span>
+            </span>
+        </div>
+        <div class="flex items-center gap-6 text-xs font-semibold">
+            <span class="text-gray-400 border-r pr-6 border-gray-200 uppercase tracking-widest font-mono">V3.0 PYTHON PURE</span>
+            <div class="flex items-center gap-2 text-[#004B87] tracking-wider font-bold">
+                <span class="w-2 h-2 rounded-full bg-[#2ECC71] inline-block animate-pulse"></span>
+                SYSTEMS ONLINE
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace Container -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        
+        <!-- Left Side Bar: Controls, Quick Profiles, Run Pipeline -->
+        <section id="left-sidebar" class="w-full lg:w-96 border-r border-gray-200 bg-white p-6 flex flex-col gap-6 overflow-y-auto shrink-0 shadow-inner">
+            
+            <!-- Quick Profiles Selector -->
+            <div>
+                <label class="block text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-2 font-mono">QUICK TEST PROFILES</label>
+                <div class="grid grid-cols-2 gap-2" id="profile-container">
+                    <button onclick="loadProfile('zomato')" id="btn-zomato" class="profile-btn px-3 py-2 text-xs rounded border text-left transition-all border-[#004B87] bg-[#F0F4F8] font-bold text-[#004B87]">
+                        <div class="font-bold truncate">Eternal Ltd.</div>
+                        <span class="text-[10px] text-gray-400 font-medium font-mono">Retail & Blinkit</span>
+                    </button>
+                    <button onclick="loadProfile('icici')" id="btn-icici" class="profile-btn px-3 py-2 text-xs rounded border border-gray-200 text-gray-700 hover:bg-gray-50 text-left transition-all">
+                        <div class="font-bold truncate">ICICI Bank</div>
+                        <span class="text-[10px] text-gray-400 font-medium font-mono">Banking & FI</span>
+                    </button>
+                    <button onclick="loadProfile('jsw')" id="btn-jsw" class="profile-btn px-3 py-2 text-xs rounded border border-gray-200 text-gray-700 hover:bg-gray-50 text-left transition-all">
+                        <div class="font-bold truncate">JSW Energy</div>
+                        <span class="text-[10px] text-gray-400 font-medium font-mono">Renewable Power</span>
+                    </button>
+                    <button onclick="loadProfile('ltts')" id="btn-ltts" class="profile-btn px-3 py-2 text-xs rounded border border-gray-200 text-gray-700 hover:bg-gray-50 text-left transition-all">
+                        <div class="font-bold truncate">L&T Tech Services</div>
+                        <span class="text-[10px] text-gray-400 font-medium font-mono">Pure ER&D</span>
+                    </button>
+                    <button onclick="loadProfile('pocl')" id="btn-pocl" class="profile-btn px-3 py-2 text-xs rounded border border-gray-200 text-gray-700 hover:bg-gray-50 text-left transition-all col-span-2">
+                        <div class="font-bold truncate">Pondy Oxides (POCL)</div>
+                        <span class="text-[10px] text-gray-400 font-medium font-mono">Lead Smelting & Recycling (Q2)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Extraction Zone -->
+            <div class="border-t border-gray-100 pt-4">
+                <label class="block text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-2 font-mono">AI DOCUMENT UPLOADER</label>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-500 font-medium block mb-1">Company Primary Name</label>
+                        <input id="input-company-name" type="text" value="Eternal Ltd." placeholder="Analyze company name" class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#004B87] bg-gray-50 font-medium">
+                    </div>
+
+                    <!-- Drag & Drop container -->
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-200 rounded-lg p-6 flex flex-col items-center justify-center text-center bg-gray-50 hover:bg-gray-100/50 transition-all cursor-pointer group relative">
+                        <input type="file" id="file-input" accept=".pdf,.txt,.csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <i data-lucide="upload" class="w-8 h-8 text-gray-300 group-hover:text-[#004B87] transition-all mb-2"></i>
+                        <span id="drop-text" class="text-xs font-semibold text-gray-600 block">Drop or Click to Browse PDF/TXT/CSV</span>
+                        <span id="file-info" class="text-[10px] text-emerald-600 mt-1 font-mono hidden">No file loaded</span>
+                    </div>
+
+                    <p id="error-alert" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg hidden font-medium"></p>
+
+                    <button onclick="triggerAnalysis()" id="btn-process" disabled class="w-full py-3 bg-gray-100 text-gray-400 cursor-not-allowed rounded font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        EXTRACT & COMPILE REPORT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Live UI Interactive Overrides -->
+            <div class="border-t border-gray-100 pt-4">
+                <label class="block text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-2 font-mono">LIVE MANUAL OVERRIDES</label>
+                <div class="space-y-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] text-gray-500 block mb-1">CMP (Rs.)</label>
+                            <input id="override-cmp" type="text" value="Rs. 306" class="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#004B87] bg-white font-mono">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 block mb-1">Target Price</label>
+                            <input id="override-target" type="text" value="Rs. 337" class="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[#004B87] bg-white font-mono">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 block mb-1">Rating Category</label>
+                        <select id="override-rating" class="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white">
+                            <option value="BUY">BUY</option>
+                            <option value="HOLD" selected>HOLD</option>
+                            <option value="ACCUMULATE">ACCUMULATE</option>
+                            <option value="REDUCE">REDUCE</option>
+                            <option value="SELL">SELL</option>
+                        </select>
+                    </div>
+                    <button onclick="applyManualSync()" class="w-full py-1.5 bg-gray-200 hover:bg-gray-300 text-[10px] font-bold text-gray-700 rounded transition-all flex items-center justify-center gap-1 font-mono">
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                        SYNC MODIFICATIONS
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calibration Stats -->
+            <div class="p-4 bg-[#F2F4F2] rounded-lg border border-[#DCE4ED] mt-auto">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-bold text-[#004B87] tracking-wider font-mono">EXTRACTION ACCURACY</span>
+                    <span class="text-[10px] font-bold text-emerald-600 font-mono">98.5%</span>
+                </div>
+                <div class="w-full bg-white h-1.5 rounded-full overflow-hidden">
+                    <div class="w-[98%] h-full bg-emerald-500"></div>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-2 flex gap-1 items-center">
+                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500 shrink-0"></i>
+                    All reporting metrics structurally audited.
+                </p>
+            </div>
+
+        </section>
+
+        <!-- Right Side: PDF Compilation Sheet Render Panel -->
+        <section class="flex-1 bg-gray-100 p-8 flex flex-col overflow-y-auto">
+            
+            <!-- Context Action Row -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 bg-[#004B87] rounded-full"></span>
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest font-mono">Geojit Research Blueprint Stage</span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    
+                    <!-- Page View Tab Selectors -->
+                    <div class="flex bg-white rounded-lg p-0.5 border border-gray-200 shadow-sm font-semibold text-xs text-gray-600">
+                        <button onclick="switchTab('all')" id="tab-all" class="px-3 py-1.5 rounded-md bg-[#004B87] text-white">All Pages</button>
+                        <button onclick="switchTab('page1')" id="tab-page1" class="px-3 py-1.5 rounded-md hover:bg-gray-50">Page 1</button>
+                        <button onclick="switchTab('page2')" id="tab-page2" class="px-3 py-1.5 rounded-md hover:bg-gray-50">Page 2</button>
+                        <button onclick="switchTab('page3')" id="tab-page3" class="px-3 py-1.5 rounded-md hover:bg-gray-50">Page 3</button>
+                        <button onclick="switchTab('page4')" id="tab-page4" class="px-3 py-1.5 rounded-md hover:bg-gray-50">Page 4</button>
+                    </div>
+
+                    <!-- PDF compiler Trigger -->
+                    <button onclick="compilePDF()" id="pdf-trigger" class="px-4 py-2 bg-gradient-to-r from-[#004B87] to-[#005FA8] hover:opacity-95 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        DOWNLOAD PDF REPORT
+                    </button>
+                </div>
+            </div>
+
+            <!-- The 4 Printable Canvas Targets -->
+            <div class="flex flex-col items-center gap-10" id="pages-container">
+                
+                <!-- PAGE 1 -->
+                <div id="page1" class="report-page flex flex-col justify-between">
+                    <div>
+                        <!-- Header Banner -->
+                        <div class="flex justify-between items-start border-b border-gray-200 pb-3">
+                            <div>
+                                <span class="text-[10px] font-bold text-[#004B87] uppercase tracking-widest font-mono">Equity Research Desk</span>
+                                <h1 class="text-4xl serif-title font-black uppercase tracking-tight mt-0.5" id="p1-company-name">-</h1>
+                                <p class="text-xs text-gray-400 font-semibold mt-1 flex gap-2">
+                                    <span id="p1-sector">Sector: -</span>
+                                    <span>•</span>
+                                    <span id="p1-date">-</span>
+                                </p>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <div class="bg-teal-50 text-[#004B87] px-3 py-1 font-mono uppercase text-[11px] font-bold border border-teal-200 rounded flex gap-1">
+                                    <span>Rating:</span>
+                                    <span id="p1-rating" class="font-bold font-sans">-</span>
+                                </div>
+                                <div class="text-right mt-1.5 text-[10px] text-gray-500 font-mono">
+                                    <p>Target: <span id="p1-target" class="font-bold text-gray-800">-</span></p>
+                                    <p>CMP: <span id="p1-cmp" class="font-bold text-gray-800">-</span></p>
+                                    <p>Upside Potential: <span id="p1-return" class="font-bold text-emerald-600">-</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tickers bar -->
+                        <div class="grid grid-cols-6 border-b border-gray-100 py-1.5 text-[9px] text-gray-500 font-medium">
+                            <div class="truncate">Stock: <span id="p1-tier" class="font-bold text-gray-800">Large Cap</span></div>
+                            <div class="truncate">Bloomberg: <span id="p1-bloomberg" class="font-bold text-gray-800">-</span></div>
+                            <div class="truncate">Sensex: <span id="p1-sensex" class="font-bold text-gray-800">-</span></div>
+                            <div class="truncate">NSE Code: <span id="p1-nse" class="font-bold text-gray-800">-</span></div>
+                            <div class="truncate">BSE Code: <span id="p1-bse" class="font-bold text-gray-800">-</span></div>
+                            <div class="truncate">Horizon: <span id="p1-horizon" class="font-bold text-gray-800">12 Months</span></div>
+                        </div>
+
+                        <!-- 2-Column editorial alignment -->
+                        <div class="grid grid-cols-12 gap-6 mt-4">
+                            
+                            <!-- Left: Tables columns -->
+                            <div class="col-span-5 flex flex-col gap-4">
+                                <!-- Company Data table -->
+                                <div>
+                                    <h3 class="text-[9.5px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Company Parameters</h3>
+                                    <table class="w-full text-[9px]">
+                                        <tbody class="divide-y divide-gray-150 text-gray-700" id="p1-company-table">
+                                            <!-- populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Shareholding table -->
+                                <div>
+                                    <h3 class="text-[9.5px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Shareholding %</h3>
+                                    <table class="w-full text-[9px] text-center mt-1">
+                                        <thead>
+                                            <tr class="border-b border-gray-250 text-gray-400 text-[8px] font-mono">
+                                                <th class="text-left py-0.5">Holder</th>
+                                                <th class="py-0.5" id="p1-sh-h1">-</th>
+                                                <th class="py-0.5" id="p1-sh-h2">-</th>
+                                                <th class="py-0.5" id="p1-sh-h3">-</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-150 text-gray-700" id="p1-sh-table">
+                                            <!-- populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Price performance table -->
+                                <div>
+                                    <h3 class="text-[9.5px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Price Performance</h3>
+                                    <table class="w-full text-[9px] text-center mt-1">
+                                        <thead>
+                                            <tr class="border-b border-gray-250 text-gray-400 text-[8px] font-mono">
+                                                <th class="text-left py-0.5">Period</th>
+                                                <th class="py-0.5" id="p1-pp-h1">3M</th>
+                                                <th class="py-0.5" id="p1-pp-h2">6M</th>
+                                                <th class="py-0.5" id="p1-pp-h3">1Y</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-150 text-gray-700" id="p1-pp-table">
+                                            <!-- populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Right: Editorial Narrative -->
+                            <div class="col-span-7 flex flex-col gap-4">
+                                <div>
+                                    <h2 class="text-[13px] serif-title font-black text-[#004B87] border-b border-gray-250 pb-1 mb-2 leading-tight" id="p1-narrative-title">-</h2>
+                                    <p class="text-[9.5px] leading-relaxed text-gray-600 italic font-medium mb-3 text-justify" id="p1-narrative-summary">-</p>
+                                    
+                                    <ul class="space-y-2" id="p1-bullets">
+                                        <!-- bullets dynamically loaded -->
+                                    </ul>
+                                </div>
+
+                                <div class="bg-gray-50 p-2.5 border-l-4 border-[#004B87] rounded-r">
+                                    <h4 class="text-[10px] serif-title font-bold text-[#004B87] mb-0.5">Valuation Outlook</h4>
+                                    <p class="text-[8.5px] leading-relaxed text-gray-600 font-medium text-justify" id="p1-outlook">-</p>
+                                </div>
+
+                                <!-- Quarterly Finances -->
+                                <div>
+                                    <h3 class="text-[9.5px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Quarterly Consolidated</h3>
+                                    <table class="w-full text-[8.5px] text-right mt-1">
+                                        <thead>
+                                            <tr class="border-b border-gray-250 text-gray-400 text-[7px] font-mono" id="p1-q-headers">
+                                                <!-- injected dynamically -->
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-150 text-gray-700 font-medium" id="p1-q-table">
+                                            <!-- injected dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- March metrics section (at page 1 base) -->
+                    <div class="border-t border-gray-200 pt-3">
+                        <h3 class="text-[9.5px] font-bold text-[#004B87] uppercase tracking-wider font-mono">Consolidated March Financials</h3>
+                        <table class="w-full text-center text-[8.5px] mt-1 font-medium">
+                            <thead>
+                                <tr class="border-b border-gray-200 text-gray-400 text-[7px] font-mono" id="p1-march-headers">
+                                    <!-- injected dynamically -->
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-150 text-gray-700 font-medium" id="p1-march-table">
+                                <!-- injected dynamically -->
+                            </tbody>
+                        </table>
+                        
+                        <div class="flex justify-between items-center opacity-30 mt-4 pt-1.5 border-t border-gray-150 text-[7.5px] font-mono">
+                            <span>www.geojit.com</span>
+                            <span>Geojit Financial Services Ltd. Retail Equity Research</span>
+                            <span>Page 1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 2 -->
+                <div id="page2" class="report-page flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-1.5 mb-4">
+                            <span class="serif-title italic font-bold text-xs text-[#004B87]" id="p2-header-title">-</span>
+                            <span class="text-[9px] font-mono text-gray-400">Page 2 of 4</span>
+                        </div>
+
+                        <!-- 2x2 grid of canvas trends -->
+                        <div>
+                            <h3 class="text-[10px] uppercase tracking-wider font-bold text-[#004B87] mb-3 font-mono">Key Performance Visualizers</h3>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                                <div class="p-3 border border-gray-100 rounded bg-[#FAFAF9]">
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest block font-mono mb-1">CONSOLIDATED REVENUE TREND</span>
+                                    <div class="h-[140px]"><canvas id="chart-revenue"></canvas></div>
+                                </div>
+                                <div class="p-3 border border-gray-100 rounded bg-[#FAFAF9]">
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest block font-mono mb-1">GOV / SEGMENT VOLUME</span>
+                                    <div class="h-[140px]"><canvas id="chart-gov"></canvas></div>
+                                </div>
+                                <div class="p-3 border border-gray-100 rounded bg-[#FAFAF9]">
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest block font-mono mb-1">EBITDA & MARGIN %</span>
+                                    <div class="h-[140px]"><canvas id="chart-ebitda"></canvas></div>
+                                </div>
+                                <div class="p-3 border border-gray-100 rounded bg-[#FAFAF9]">
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest block font-mono mb-1">ADJUSTED PAT TREND</span>
+                                    <div class="h-[140px]"><canvas id="chart-pat"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Change in Estimates -->
+                        <div class="mt-6">
+                            <h3 class="text-[9.5px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Modifications to trailing Estimates</h3>
+                            <table class="w-full text-right text-[8.5px] border-collapse mt-2">
+                                <thead>
+                                    <tr class="border-b border-gray-250 text-gray-400 text-[7px] font-mono">
+                                        <th class="text-left py-1">Metric</th>
+                                        <th colspan="2" class="text-center bg-gray-50/50">Old Estimation</th>
+                                        <th colspan="2" class="text-center bg-gray-150/50">New Estimation</th>
+                                        <th colspan="2" class="text-center bg-teal-50 text-[#004B87]">Deviation (%)</th>
+                                    </tr>
+                                    <tr class="border-b border-gray-150 text-gray-500 font-mono text-[7px]" id="p2-est-subheaders">
+                                        <!-- injected dynamically -->
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-150 text-gray-700 font-medium" id="p2-est-table">
+                                    <!-- injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center opacity-30 pt-1.5 border-t border-gray-150 text-[7.5px] font-mono">
+                        <span>www.geojit.com</span>
+                        <span>Geojit Financial Services Ltd. Retail Equity Research</span>
+                        <span>Page 2</span>
+                    </div>
+                </div>
+
+                <!-- PAGE 3 -->
+                <div id="page3" class="report-page flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-1.5 mb-4">
+                            <span class="serif-title italic font-bold text-xs text-[#004B87]" id="p3-header-title">-</span>
+                            <span class="text-[9px] font-mono text-gray-400">Page 3 of 4</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                            <!-- Profit and Loss Table -->
+                            <div>
+                                <h3 class="text-[9px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Consolidated Profit & Loss</h3>
+                                <table class="w-full text-[7.5px] text-right mt-1">
+                                    <thead>
+                                        <tr class="border-b border-gray-200 text-gray-400 text-[6.5px] font-mono" id="p3-pl-headers">
+                                            <!-- dynamic -->
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 text-gray-700" id="p3-pl-table">
+                                        <!-- dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Balance Sheet Table -->
+                            <div>
+                                <h3 class="text-[9px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Consolidated Balance Sheet</h3>
+                                <table class="w-full text-[7.5px] text-right mt-1">
+                                    <thead>
+                                        <tr class="border-b border-gray-200 text-gray-400 text-[6.5px] font-mono" id="p3-bs-headers">
+                                            <!-- dynamic -->
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 text-gray-700" id="p3-bs-table">
+                                        <!-- dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Cashflow Table -->
+                            <div>
+                                <h3 class="text-[9px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Consolidated Cashflow</h3>
+                                <table class="w-full text-[7.5px] text-right mt-1">
+                                    <thead>
+                                        <tr class="border-b border-gray-200 text-gray-400 text-[6.5px] font-mono" id="p3-cf-headers">
+                                            <!-- dynamic -->
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 text-gray-700" id="p3-cf-table">
+                                        <!-- dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Ratios Table -->
+                            <div>
+                                <h3 class="text-[9px] font-bold text-white bg-[#004B87] px-2 py-0.5 uppercase tracking-wider font-mono">Structural Financial Ratios</h3>
+                                <table class="w-full text-[7.5px] text-right mt-1">
+                                    <thead>
+                                        <tr class="border-b border-gray-200 text-gray-400 text-[6.5px] font-mono" id="p3-r-headers">
+                                            <!-- dynamic -->
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 text-gray-700" id="p3-r-table">
+                                        <!-- dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center opacity-30 pt-1.5 border-t border-gray-150 text-[7.5px] font-mono">
+                        <span>www.geojit.com</span>
+                        <span>Geojit Financial Services Ltd. Retail Equity Research</span>
+                        <span>Page 3</span>
+                    </div>
+                </div>
+
+                <!-- PAGE 4 -->
+                <div id="page4" class="report-page flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-1.5">
+                            <span class="serif-title italic font-bold text-xs text-[#004B87]">Recommendations & Disclosures</span>
+                            <span class="text-[9px] font-mono text-gray-400">Page 4 of 4</span>
+                        </div>
+
+                        <!-- Rating guides -->
+                        <div>
+                            <h3 class="text-[9.5px] font-bold text-[#004B87] uppercase tracking-wider font-mono mb-1.5">Geojit Rating Framework</h3>
+                            <div class="grid grid-cols-4 gap-3 bg-[#FAFAF9] p-2.5 rounded border border-gray-100 text-[8px] text-gray-500 leading-relaxed">
+                                <div class="border-r border-gray-200 pr-1">
+                                    <p class="font-bold text-emerald-700 text-[9px] mb-0.5 font-sans">BUY</p>
+                                    CAGR upward return expectation exceeds 10% for Large Cap or 15% for Mid Cap assets.
+                                </div>
+                                <div class="border-r border-gray-200 pr-1">
+                                    <p class="font-bold text-teal-700 text-[9px] mb-0.5 font-sans">ACCUMULATE</p>
+                                    Target upward potential ranges between 10% to 15% with stable risk index.
+                                </div>
+                                <div class="border-r border-gray-200 pr-1">
+                                    <p class="font-bold text-amber-600 text-[9px] mb-0.5 font-sans">HOLD</p>
+                                    CMP holds within 0% to 10% target premium; limited catalysts.
+                                </div>
+                                <div>
+                                    <p class="font-bold text-red-600 text-[9px] mb-0.5 font-sans">REDUCE / SELL</p>
+                                    Asset expected to generate absolute negative returns in the 12-month window.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Disclaimers & Disclosures matching Geojit screenshots exactly -->
+                        <div class="text-[7px] leading-relaxed text-gray-500 font-medium space-y-2 uppercase-none text-justify border-t border-gray-100 pt-3">
+                            <p>
+                                <span class="font-bold text-gray-700 block text-[8px] mb-0.5 font-sans">REGULATORY DISCLOSURES & SEBI COMPLIANCES</span>
+                                Analytically Authenticated: We, Gopika Gopan & designated retail desk analyst team, hereby certify that the opinions and rating coordinates stated in this coverage report faithfully reflect our personal, audited valuation formulas regarding the subject assets and security issuers. No fraction of our executive billing or commission shares are, or will ever hold direct/indirect alliances with the specific target levels or buy commands outputted herein.
+                            </p>
+                            <p>
+                                Geojit Financial Services Limited acts as a registered SEBI Research Analyst (Reg No. INH000001956) and stock market participant (NSE / BSE Clearing member). Investment markets hold structural and systemic risks; read all product documents meticulously before placing financial deposits.
+                            </p>
+                            <p>
+                                <span class="font-bold text-gray-700 block text-[7.5px] font-sans">Conflicts & Declarations:</span>
+                                1. Equity stake: Neither Geojit nor its related brokers hold above 1% aggregate holding in the subject company.<br>
+                                2. Client Relations: Research personnel do not function as executive directors, officers, or board members of the subject corporations.<br>
+                                3. Compensations: No corporate advisory fees, banking commissions, or market-making royalties were collected from the target securities in the past 12 months.
+                            </p>
+                            <p>
+                                Registered Office: 11th Floor, Geojit Premises, Kochi - 682024, Kerala. Compliance coordinator cell managed by compliance@geojit.com. Dispute support channels available via Smart ODR.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Analysts Sign Block -->
+                    <div>
+                        <div class="border-t border-gray-200 pt-3 flex justify-between items-end">
+                            <div class="text-[8px] text-gray-400 font-medium">
+                                <p class="font-bold text-gray-700 leading-none">GOPIKA GOPAN</p>
+                                <p class="mt-0.5">Head of Equity Research Division</p>
+                                <p>Geojit Financial Services Ltd.</p>
+                            </div>
+                            <div class="text-right text-[8px] text-gray-400 bg-slate-50 p-2 border border-gray-200 rounded font-mono">
+                                <p class="font-bold text-gray-700">Digital Signature Verification</p>
+                                <p>Ref: SEBI-RA-1956</p>
+                                <p>Audited: <span id="p4-sign-date">-</span></p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center opacity-30 mt-4 pt-1.5 border-t border-gray-150 text-[7.5px] font-mono">
+                            <span>www.geojit.com</span>
+                            <span>Geojit Financial Services Ltd. Retail Equity Research</span>
+                            <span>Page 4</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Preloaded Database Profiles (Matches the previous exact schemas) -->
+    <script>
+        const PRELOADED_PROFILES = {
+            zomato: {
+                companyDetails: {
+                    name: "Eternal Ltd.",
+                    ticker: "ETERNAL",
+                    sector: "Internet & Catalogue Retail",
+                    date: "29th July, 2025",
+                    rating: "HOLD",
+                    cmp: "Rs. 306",
+                    targetPrice: "Rs. 337",
+                    returnPercent: "+10%",
+                    stockType: "Large Cap",
+                    bloombergCode: "ETERNAL:IN",
+                    nseCode: "ETERNAL",
+                    bseCode: "543320",
+                    timeFrame: "12 Months",
+                    sensex: "81,334"
+                },
+                companyData: {
+                    marketCap: "295,735",
+                    fiftyTwoWeekHighLow: "314 - 190",
+                    enterpriseValue: "294,166",
+                    outstandingShares: "965.0",
+                    freeFloat: "71.9",
+                    dividendYield: "-",
+                    sixMonthAverageVolume: "6.1",
+                    beta: "1.0",
+                    faceValue: "1.0"
+                },
+                shareholding: {
+                    periodHeaders: ["Q3FY25", "Q4FY25", "Q1FY26"],
+                    promoters: ["0.0", "0.0", "0.0"],
+                    fiis: ["47.3", "44.4", "42.3"],
+                    mfs: ["20.5", "23.6", "26.6"],
+                    public: ["8.0", "8.5", "7.6"],
+                    others: ["24.1", "23.6", "23.5"],
+                    promoterPledge: ["Nil", "Nil", "Nil"]
+                },
+                pricePerformance: {
+                    periodHeaders: ["3 Month", "6 Month", "1 Year"],
+                    absoluteReturn: ["32.1%", "44.8%", "39.7%"],
+                    absoluteSensex: ["3.0%", "7.9%", "2.5%"],
+                    relativeReturn: ["29.2%", "36.9%", "37.1%"]
+                },
+                narrative: {
+                    title: "Blinkit propels growth; valuation limits upside",
+                    summary: "Eternal Limited, formerly Zomato Limited, operates as an online food delivery company. It runs a B2C platform under the Zomato brand. The company also operates Hyperpure and Blinkit, organises events, provides payment services and engages in investment activities.",
+                    bullets: [
+                        "Consolidated revenue from operations surged 70.4% YoY in Q1FY26 to Rs. 7,167cr as all segments demonstrated robust growth.",
+                        "Revenue from the quick commerce business soared 154.8% YoY to Rs. 2,400cr, while the Hyperpure supplies and India food ordering and delivery segment grew 89.4% and 16.4% YoY, respectively.",
+                        "Net order value (NOV) of B2C businesses rose 55% YoY to Rs. 20,183cr in Q1FY26, with quick commerce NOV exceeding food delivery NOV for the first time.",
+                        "EBITDA fell 35.0% YoY to Rs. 115cr in Q1FY26, mainly due to higher operating expenses; consequently EBITDA margin declined 260bps to 1.6%.",
+                        "Blinkit added 243 new stores in Q1FY26, taking the total to 1,544 stores, and aims to hit 2,000 stores by December 2025."
+                    ]
+                },
+                outlookValuation: "Eternal Limited is poised for long-term growth and improved profitability, driven by its strong market position and growth prospects in the quick commerce business (QCB). The company's focus on inventory ownership and margin improvement is expected to drive profitability. Although the industry investment scale remains highly competitive, the team strategy and long-term targets remain strong. However, the stock’s significant run-up and premium valuations limit upside. We rate it HOLD with a target of Rs. 337.",
+                yeMarchFinancials: {
+                    columns: ["FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Sales (cr)", values: ["20,243", "35,020", "54,632"] },
+                        { metric: "Growth (%)", values: ["67.1", "73.0", "56.0"] },
+                        { metric: "EBITDA (cr)", values: ["637", "1,248", "3,575"] },
+                        { metric: "EBITDA Margin (%)", values: ["3.1", "3.6", "6.5"] },
+                        { metric: "PAT Adjusted (cr)", values: ["527", "927", "2,643"] },
+                        { metric: "Growth (%)", values: ["50.1", "75.9", "185.2"] },
+                        { metric: "P/E", values: ["335.8", "325.2", "114.1"] },
+                        { metric: "ROE (%)", values: ["1.7", "3.0", "7.8"] },
+                        { metric: "D/E", values: ["0.1", "0.1", "0.1"] }
+                    ]
+                },
+                quarterlyFinancials: {
+                    columns: ["Q1FY26", "Q1FY25", "YoY (%)", "Q4FY25", "QoQ (%)"],
+                    rows: [
+                        { metric: "Sales", values: ["7,167", "4,206", "70.4", "5,833", "22.9"] },
+                        { metric: "EBITDA", values: ["115", "177", "-35.0", "72", "59.7"] },
+                        { metric: "Margin (%)", values: ["1.6", "4.2", "-260bps", "1.2", "40bps"] },
+                        { metric: "EBIT", values: ["-199", "28", "-810.7", "-215", "7.4"] },
+                        { metric: "PBT", values: ["88", "239", "-63.2", "97", "-9.3"] },
+                        { metric: "Rep. PAT", values: ["25", "253", "-90.1", "39", "-35.9"] }
+                    ]
+                },
+                changeInEstimates: {
+                    columns: ["FY26E", "FY27E"],
+                    metrics: [
+                        { name: "Revenue (cr)", oldEstimates: ["30,738", "41,743"], newEstimates: ["35,020", "54,632"], changePercent: ["13.9", "30.9"] },
+                        { name: "EBITDA (cr)", oldEstimates: ["1,686", "3,959"], newEstimates: ["1,248", "3,575"], changePercent: ["-25.9", "-9.7"] },
+                        { name: "Margins (%)", oldEstimates: ["5.5", "9.5"], newEstimates: ["3.6", "6.5"], changePercent: ["-190bps", "-300bps"] },
+                        { name: "Adj. PAT (cr)", oldEstimates: ["1,460", "3,254"], newEstimates: ["927", "2,643"], changePercent: ["-36.5", "-18.8"] }
+                    ]
+                },
+                profitAndLoss: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Sales", values: ["7,079", "12,114", "20,243", "35,020", "54,632"] },
+                        { metric: "% change", values: ["68.9", "71.1", "67.1", "73.0", "56.0"] },
+                        { metric: "EBITDA", values: ["-1,210", "42", "637", "1,248", "3,575"] },
+                        { metric: "Depreciation", values: ["437", "526", "863", "1,233", "1,372"] },
+                        { metric: "EBIT", values: ["-1,647", "-484", "-226", "16", "2,203"] },
+                        { metric: "Interest", values: ["49", "72", "154", "181", "208"] },
+                        { metric: "Other Income", values: ["681", "847", "1,077", "1,401", "1,530"] },
+                        { metric: "PBT", values: ["-1,015", "291", "697", "1,236", "3,524"] },
+                        { metric: "Tax", values: ["44", "60", "-170", "309", "881"] },
+                        { metric: "Reported PAT", values: ["-971", "351", "527", "927", "2,643"] }
+                    ]
+                },
+                balanceSheet: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Cash", values: ["1,017", "731", "3,614", "3,203", "3,155"] },
+                        { metric: "Accts. Receivable", values: ["457", "794", "1,946", "3,309", "4,971"] },
+                        { metric: "Inventories", values: ["83", "88", "176", "350", "511"] },
+                        { metric: "Other Cur. Assets", values: ["9,274", "3,845", "5,965", "6,227", "6,566"] },
+                        { metric: "Investments", values: ["2,280", "10,365", "10,920", "12,012", "13,814"] },
+                        { metric: "Gross Fixed Assets", values: ["363", "529", "1,460", "2,511", "3,740"] },
+                        { metric: "Net Fixed Assets", values: ["636", "977", "2,883", "3,063", "3,198"] },
+                        { metric: "Total Assets", values: ["21,599", "23,356", "35,623", "38,346", "42,866"] },
+                        { metric: "Current Liabilities", values: ["1,406", "2,083", "3,326", "5,022", "6,791"] },
+                        { metric: "Debt Funds", values: ["392", "588", "1,654", "1,737", "1,824"] },
+                        { metric: "Shareholder Funds", values: ["19,460", "20,413", "30,317", "31,244", "33,887"] }
+                    ]
+                },
+                cashFlow: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Net inc. + Depn.", values: ["-520", "836", "1,390", "2,160", "4,015"] },
+                        { metric: "C.F. Operation", values: ["-844", "646", "308", "445", "956"] },
+                        { metric: "Capital exp.", values: ["-101", "-202", "-931", "-1,051", "-1,229"] },
+                        { metric: "C.F - Investment", values: ["457", "-347", "-7,993", "-938", "-1,091"] },
+                        { metric: "C.F - Finance", values: ["-127", "-207", "8,042", "83", "87"] },
+                        { metric: "Closing Cash", values: ["1,017", "731", "3,614", "3,203", "3,155"] }
+                    ]
+                },
+                ratios: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "EBITDA margin (%)", values: ["-17.1", "0.3", "3.1", "3.6", "6.5"] },
+                        { metric: "EBIT margin (%)", values: ["-23.3", "-4.0", "-1.1", "0.0", "4.0"] },
+                        { metric: "ROE (%)", values: ["-5.0", "1.7", "1.7", "3.0", "7.8"] },
+                        { metric: "Current ratio (x)", values: ["7.5", "2.6", "3.5", "2.6", "2.2"] },
+                        { metric: "EV/Sales (x)", values: ["6.1", "13.3", "9.5", "8.6", "5.5"] },
+                        { metric: "P/E (x)", values: ["n.m.", "4,444.8", "335.8", "325.2", "114.1"] }
+                    ]
+                },
+                charts: {
+                    revenueTrend: [
+                        { period: "Q2FY24", value1: 3200, value2: 18 },
+                        { period: "Q3FY24", value1: 3450, value2: 15 },
+                        { period: "Q4FY24", value1: 3910, value2: 18 },
+                        { period: "Q1FY25", value1: 4206, value2: 14 },
+                        { period: "Q2FY25", value1: 4790, value2: 12 },
+                        { period: "Q3FY25", value1: 5210, value2: 8 },
+                        { period: "Q4FY25", value1: 5833, value2: 11 },
+                        { period: "Q1FY26", value1: 7167, value2: 24 }
+                    ],
+                    orderValueTrend: [
+                        { period: "Q2FY24", value1: 110 },
+                        { period: "Q3FY24", value1: 125 },
+                        { period: "Q4FY24", value1: 140 },
+                        { period: "Q1FY25", value1: 149 },
+                        { period: "Q2FY25", value1: 168 },
+                        { period: "Q3FY25", value1: 182 },
+                        { period: "Q4FY25", value1: 202 }
+                    ],
+                    ebitdaTrend: [
+                        { period: "Q2FY24", value1: -12, value2: -1.7 },
+                        { period: "Q3FY24", value1: 18, value2: 1.6 },
+                        { period: "Q4FY24", value1: 45, value2: 2.4 },
+                        { period: "Q1FY25", value1: 177, value2: 4.2 },
+                        { period: "Q2FY25", value1: 195, value2: 4.7 },
+                        { period: "Q3FY25", value1: 160, value2: 3.0 },
+                        { period: "Q4FY25", value1: 72, value2: 1.2 },
+                        { period: "Q1FY26", value1: 115, value2: 1.6 }
+                    ],
+                    patTrend: [
+                        { period: "Q2FY24", value1: -36 },
+                        { period: "Q3FY24", value1: 22 },
+                        { period: "Q4FY24", value1: 30 },
+                        { period: "Q1FY25", value1: 253 },
+                        { period: "Q2FY25", value1: 117 },
+                        { period: "Q3FY25", value1: 85 },
+                        { period: "Q4FY25", value1: 39 },
+                        { period: "Q1FY26", value1: 25 }
+                    ]
+                }
+            },
+            icici: {
+                companyDetails: {
+                    name: "ICICI Bank Limited",
+                    ticker: "ICICIBANK",
+                    sector: "Banking & Financial Services",
+                    date: "18th October, 2025",
+                    rating: "BUY",
+                    cmp: "Rs. 980",
+                    targetPrice: "Rs. 1,120",
+                    returnPercent: "+14.3%",
+                    stockType: "Large Cap",
+                    bloombergCode: "ICICI:IN",
+                    nseCode: "ICICIBANK",
+                    bseCode: "532174",
+                    timeFrame: "12 Months",
+                    sensex: "80,450"
+                },
+                companyData: {
+                    marketCap: "687,249",
+                    fiftyTwoWeekHighLow: "1050 - 840",
+                    enterpriseValue: "N.A.",
+                    outstandingShares: "701.2",
+                    freeFloat: "100.0",
+                    dividendYield: "1.2%",
+                    sixMonthAverageVolume: "1.2",
+                    beta: "1.1",
+                    faceValue: "2.0"
+                },
+                shareholding: {
+                    periodHeaders: ["Mar 31, 2025", "Jun 30, 2025", "Sep 30, 2025"],
+                    promoters: ["0.0", "0.0", "0.0"],
+                    fiis: ["43.6", "42.8", "42.9"],
+                    mfs: ["29.4", "30.1", "30.3"],
+                    public: ["12.1", "12.2", "12.0"],
+                    others: ["14.9", "14.9", "14.8"],
+                    promoterPledge: ["Nil", "Nil", "Nil"]
+                },
+                pricePerformance: {
+                    periodHeaders: ["3 Month", "6 Month", "1 Year"],
+                    absoluteReturn: ["8.2%", "14.1%", "23.5%"],
+                    absoluteSensex: ["4.1%", "6.5%", "11.2%"],
+                    relativeReturn: ["4.1%", "7.6%", "12.3%"]
+                },
+                narrative: {
+                    title: "Robust Loan Expansion & Pristine Asset Quality Fuels Momentum",
+                    summary: "ICICI Bank is one of India's pre-eminent private sector universal banks. It offers a wide suite of commercial, retail, investment, and wealth management services to individuals and businesses.",
+                    bullets: [
+                        "Operating profit grew by 6.5% YoY to Rs. 170.78 bn in Q2-2026, showcasing strong core efficiency.",
+                        "Net interest income surged 7.4% QoQ/YoY with core interest-earning assets expanding soundly.",
+                        "Domestic credit book registered double-digit growth of 10.6% YoY driven by robust retail and business banking credit demands.",
+                        "Total average deposits grew by 9.1% YoY to ₹ 15,574.49 bn, with a highly stable CASA share at 39.2%.",
+                        "Pristine asset quality with Gross NPA ratio contracting below 1.58% and Provision Coverage Ratio maintained robustly at 75.0%."
+                    ]
+                },
+                outlookValuation: "ICICI Bank's stellar retail and credit metrics support robust compound earnings growth. Core segment NIM holds consistent above 4.3%, outclassing peers. Provisions are well guarded and capitalization benchmarks are pristine. We reiterate a healthy BUY rating.",
+                yeMarchFinancials: {
+                    columns: ["FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Net Interest Inc (cr)", values: ["62,450", "71,200", "84,600"] },
+                        { metric: "Growth (%)", values: ["12.3", "14.0", "18.8"] },
+                        { metric: "Operating Profit (cr)", values: ["49,100", "56,400", "64,800"] },
+                        { metric: "NIM (%)", values: ["4.3", "4.4", "4.5"] },
+                        { metric: "PAT (cr)", values: ["31,400", "36,200", "42,500"] },
+                        { metric: "P/E", values: ["18.5", "16.1", "13.7"] },
+                        { metric: "ROE (%)", values: ["15.2", "16.0", "16.8"] },
+                        { metric: "D/E", values: ["0.4", "0.4", "0.3"] }
+                    ]
+                },
+                quarterlyFinancials: {
+                    columns: ["Q2FY26", "Q2FY25", "YoY (%)", "Q1FY26", "QoQ (%)"],
+                    rows: [
+                        { metric: "NII", values: ["18,450", "16,900", "9.2", "17,800", "3.7"] },
+                        { metric: "Op Profit", values: ["14,100", "13,200", "6.8", "13,600", "3.7"] },
+                        { metric: "PAT", values: ["9,800", "8,900", "10.1", "9,450", "3.7"] }
+                    ]
+                },
+                changeInEstimates: {
+                    columns: ["FY26E", "FY27E"],
+                    metrics: [
+                        { name: "NII (cr)", oldEstimates: ["69,300", "81,200"], newEstimates: ["71,200", "84,600"], changePercent: ["2.7", "4.1"] },
+                        { name: "PAT (cr)", oldEstimates: ["34,500", "40,100"], newEstimates: ["36,200", "42,500"], changePercent: ["4.9", "6.0"] }
+                    ]
+                },
+                profitAndLoss: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Interest Earned", values: ["112,400", "134,800", "154,600", "178,200", "204,500"] },
+                        { metric: "NII", values: ["47,200", "55,100", "62,450", "71,200", "84,600"] },
+                        { metric: "Provisions", values: ["8,400", "9,200", "10,100", "11,200", "12,500"] },
+                        { metric: "Reported PAT", values: ["22,400", "27,200", "31,400", "36,200", "42,500"] }
+                    ]
+                },
+                balanceSheet: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Advances", values: ["650,400", "740,200", "860,500", "980,200", "1,112,000"] },
+                        { metric: "Deposits", values: ["890,200", "1,012,000", "1,180,400", "1,340,600", "1,540,500"] },
+                        { metric: "Net Worth", values: ["180,200", "204,500", "234,600", "271,200", "312,400"] }
+                    ]
+                },
+                cashFlow: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Operating Cash", values: ["14,200", "18,400", "21,500", "26,800", "32,400"] },
+                        { metric: "Investing Cash", values: ["-4,500", "-5,200", "-6,400", "-7,100", "-8,500"] },
+                        { metric: "Closing Cash", values: ["44,200", "52,600", "64,800", "78,200", "94,100"] }
+                    ]
+                },
+                ratios: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "NIM %", values: ["4.1", "4.2", "4.3", "4.4", "4.5"] },
+                        { metric: "ROE %", values: ["13.8", "14.5", "15.2", "16.0", "16.8"] },
+                        { metric: "Gross NPA %", values: ["2.1", "1.8", "1.6", "1.4", "1.2"] }
+                    ]
+                },
+                charts: {
+                    revenueTrend: [
+                        { period: "Q2FY24", value1: 15400 },
+                        { period: "Q3FY24", value1: 16100 },
+                        { period: "Q4FY24", value1: 16800 },
+                        { period: "Q1FY25", value1: 17200 },
+                        { period: "Q2FY25", value1: 17800 },
+                        { period: "Q3FY25", value1: 18400 },
+                        { period: "Q4FY25", value1: 19100 }
+                    ],
+                    orderValueTrend: [
+                        { period: "Q2FY24", value1: 710 },
+                        { period: "Q3FY24", value1: 740 },
+                        { period: "Q4FY24", value1: 820 },
+                        { period: "Q1FY25", value1: 890 },
+                        { period: "Q2FY25", value1: 940 }
+                    ],
+                    ebitdaTrend: [
+                        { period: "Q2FY24", value1: 11200, value2: 4.1 },
+                        { period: "Q3FY24", value1: 11900, value2: 4.2 },
+                        { period: "Q4FY24", value1: 12400, value2: 4.3 }
+                    ],
+                    patTrend: [
+                        { period: "Q2FY24", value1: 7800 },
+                        { period: "Q3FY24", value1: 8100 },
+                        { period: "Q4FY24", value1: 8900 }
+                    ]
+                }
+            },
+            jsw: {
+                companyDetails: {
+                    name: "JSW Energy Limited",
+                    ticker: "JSWENERGY",
+                    sector: "Power & Renewable Infrastructure",
+                    date: "17th October, 2025",
+                    rating: "BUY",
+                    cmp: "Rs. 410",
+                    targetPrice: "Rs. 485",
+                    returnPercent: "+18.3%",
+                    stockType: "Large Cap",
+                    bloombergCode: "JSW:IN",
+                    nseCode: "JSWENERGY",
+                    bseCode: "533148",
+                    timeFrame: "12 Months",
+                    sensex: "80,450"
+                },
+                companyData: {
+                    marketCap: "71,560",
+                    fiftyTwoWeekHighLow: "445 - 280",
+                    enterpriseValue: "121,053",
+                    outstandingShares: "174.5",
+                    freeFloat: "25.0",
+                    dividendYield: "0.5%",
+                    sixMonthAverageVolume: "0.8",
+                    beta: "1.25",
+                    faceValue: "10.0"
+                },
+                shareholding: {
+                    periodHeaders: ["Mar 31, 25", "Jun 30, 25", "Sep 30, 25"],
+                    promoters: ["75.0", "74.8", "74.8"],
+                    fiis: ["9.2", "9.5", "9.6"],
+                    mfs: ["7.5", "7.8", "7.9"],
+                    public: ["5.2", "4.9", "4.7"],
+                    others: ["3.1", "3.0", "3.0"],
+                    promoterPledge: ["Nil", "Nil", "Nil"]
+                },
+                pricePerformance: {
+                    periodHeaders: ["3 Month", "6 Month", "1 Year"],
+                    absoluteReturn: ["12.5%", "22.1%", "48.2%"],
+                    absoluteSensex: ["4.1%", "6.5%", "11.2%"],
+                    relativeReturn: ["8.4%", "15.6%", "37.0%"]
+                },
+                narrative: {
+                    title: "Massive Renewable Capacity Addition Drives Outstanding Performance",
+                    summary: "JSW Energy Limited operates thermal, hydro, wind, and solar assets under its Strategy 3.0 vision to reach 30 GW generation capacity by 2030.",
+                    bullets: [
+                        "Operating EBITDA surged by 67% YoY to ₹ 3,180 Cr in Q2-2026, primarily driven by O2 Power acquisition.",
+                        "Net generation skyrocketed up by 52% YoY, from 9.8 BUs to 14.9 BUs.",
+                        "Added 443 MW capacity including pre-timeline hydro commissioning.",
+                        "Excellent pipeline depth with 12.5 GW under construction / PPA-tied grid connection.",
+                        "Net debt to equity maintains strong capital discipline below 2.1x."
+                    ]
+                },
+                outlookValuation: "Commissioning of the Kutehr hydro utility, combined with robust long-term PPAs, eliminates carbon price volatility. High strategic capacity targets justify leverage ratios. Standard buy recommendation.",
+                yeMarchFinancials: {
+                    columns: ["FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Sales (cr)", values: ["11,200", "13,400", "16,800"] },
+                        { metric: "Growth (%)", values: ["8.2", "19.6", "25.3"] },
+                        { metric: "EBITDA (cr)", values: ["3,180", "3,800", "4,900"] },
+                        { metric: "EBITDA Margin (%)", values: ["28.3", "28.4", "29.1"] },
+                        { metric: "PAT Adjusted (cr)", values: ["1,240", "1,520", "2,100"] }
+                    ]
+                },
+                quarterlyFinancials: {
+                    columns: ["Q2FY26", "Q2FY25", "YoY (%)", "Q1FY26", "QoQ (%)"],
+                    rows: [
+                        { metric: "Sales", values: ["3,400", "2,840", "19.7", "3,150", "7.9"] },
+                        { metric: "EBITDA", values: ["1,150", "840", "36.9", "1,050", "9.5"] }
+                    ]
+                },
+                changeInEstimates: {
+                    columns: ["FY26E", "FY27E"],
+                    metrics: [
+                        { name: "Sales (cr)", oldEstimates: ["12,800", "15,800"], newEstimates: ["13,400", "16,800"], changePercent: ["4.6", "6.3"] }
+                    ]
+                },
+                profitAndLoss: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Sales", values: ["9,100", "10,200", "11,200", "13,400", "16,800"] },
+                        { metric: "EBITDA", values: ["2,400", "2,850", "3,180", "3,800", "4,900"] },
+                        { metric: "Reported PAT", values: ["950", "1,120", "1,240", "1,520", "2,100"] }
+                    ]
+                },
+                balanceSheet: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Net Fixed Assets", values: ["28,400", "32,100", "38,500", "44,600", "52,400"] },
+                        { metric: "Debt", values: ["18,400", "21,300", "24,800", "28,200", "32,100"] }
+                    ]
+                },
+                cashFlow: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "C.F. Operation", values: ["2,100", "2,450", "2,800", "3,400", "4,100"] }
+                    ]
+                },
+                ratios: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "EBITDA margin (%)", values: ["26.3", "27.9", "28.3", "28.4", "29.1"] }
+                    ]
+                },
+                charts: {
+                    revenueTrend: [
+                        { period: "Q2FY24", value1: 2750 },
+                        { period: "Q3FY24", value1: 2890 },
+                        { period: "Q4FY24", value1: 3100 }
+                    ],
+                    orderValueTrend: [
+                        { period: "Q2FY24", value1: 410 },
+                        { period: "Q3FY24", value1: 480 }
+                    ],
+                    ebitdaTrend: [
+                        { period: "Q2FY24", value1: 720, value2: 26.2 }
+                    ],
+                    patTrend: [
+                        { period: "Q2FY24", value1: 280 }
+                    ]
+                }
+            },
+            ltts: {
+                companyDetails: {
+                    name: "L&T Technology Services Ltd.",
+                    ticker: "LTTS",
+                    sector: "IT - Consulting & Engineering",
+                    date: "17th October, 2025",
+                    rating: "BUY",
+                    cmp: "Rs. 4,500",
+                    targetPrice: "Rs. 5,200",
+                    returnPercent: "+15.6%",
+                    stockType: "Large Cap",
+                    bloombergCode: "LTTS:IN",
+                    nseCode: "LTTS",
+                    bseCode: "540115",
+                    timeFrame: "12 Months",
+                    sensex: "80,450"
+                },
+                companyData: {
+                    marketCap: "47,560",
+                    fiftyTwoWeekHighLow: "5150 - 3900",
+                    enterpriseValue: "44,120",
+                    outstandingShares: "10.5",
+                    freeFloat: "26.1",
+                    dividendYield: "1.5%",
+                    sixMonthAverageVolume: "0.2",
+                    beta: "0.95",
+                    faceValue: "2.0"
+                },
+                shareholding: {
+                    periodHeaders: ["Mar 31, 25", "Jun 30, 25", "Sep 30, 25"],
+                    promoters: ["73.8", "73.8", "73.8"],
+                    fiis: ["6.2", "6.1", "6.0"],
+                    mfs: ["10.5", "10.6", "10.8"],
+                    public: ["7.2", "7.1", "7.1"],
+                    others: ["2.3", "2.4", "2.3"],
+                    promoterPledge: ["Nil", "Nil", "Nil"]
+                },
+                pricePerformance: {
+                    periodHeaders: ["3 Month", "6 Month", "1 Year"],
+                    absoluteReturn: ["5.1%", "12.3%", "18.4%"],
+                    absoluteSensex: ["4.1%", "6.5%", "11.2%"],
+                    relativeReturn: ["1.0%", "5.8%", "7.2%"]
+                },
+                narrative: {
+                    title: "AI-First Strategy & Large TCV Wins Secures Superior Earnings Visibility",
+                    summary: "L&T Technology Services (LTTS) coordinates pure-play engineering research and development (ER&D) services around IoT and automotive software.",
+                    bullets: [
+                        "Total revenues grew 15.8% YoY to ₹ 29,795 million in Q2FY26.",
+                        "TCV deal bookings registered record high of USD 300 million.",
+                        "Strong core EBIT execution margin recorded at 13.4%.",
+                        "Consolidated Net profit grew index-wise to ₹ 3,287 million.",
+                        "Aggressive AI integrations with proprietary Qguard.ai and FusionWorld.ai systems."
+                    ]
+                },
+                outlookValuation: "Automation cycles and sustainability engineering software provide long-term growth vectors. Large-scale global client acquisitions bolster revenue pipelines. High conviction recommendation.",
+                yeMarchFinancials: {
+                    columns: ["FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Sales (mn)", values: ["102,400", "118,500", "136,400"] },
+                        { metric: "EBITDA Margin (%)", values: ["13.1", "13.4", "13.6"] },
+                        { metric: "PAT Adjusted (mn)", values: ["12,400", "14,800", "17,200"] }
+                    ]
+                },
+                quarterlyFinancials: {
+                    columns: ["Q2FY26", "Q2FY25", "YoY (%)", "Q1FY26", "QoQ (%)"],
+                    rows: [
+                        { metric: "Sales", values: ["29,795", "25,720", "15.8", "28,100", "6.0"] }
+                    ]
+                },
+                changeInEstimates: {
+                    columns: ["FY26E", "FY27E"],
+                    metrics: [
+                        { name: "Revenue (mn)", oldEstimates: ["114,200", "131,500"], newEstimates: ["118,500", "136,400"], changePercent: ["3.7", "3.7"] }
+                    ]
+                },
+                profitAndLoss: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Sales", values: ["82,400", "96,100", "102,400", "118,500", "136,400"] },
+                        { metric: "Reported PAT", values: ["9,100", "11,200", "12,400", "14,800", "17,200"] }
+                    ]
+                },
+                balanceSheet: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Total Assets", values: ["62,400", "71,500", "84,000", "96,500", "112,000"] }
+                    ]
+                },
+                cashFlow: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "C.F. Operation", values: ["8,500", "10,200", "11,400", "13,600", "15,800"] }
+                    ]
+                },
+                ratios: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "EBITDA margin (%)", values: ["12.8", "13.0", "13.1", "13.4", "13.6"] }
+                    ]
+                },
+                charts: {
+                    revenueTrend: [
+                        { period: "Q2FY24", value1: 23200 },
+                        { period: "Q3FY24", value1: 24100 }
+                    ],
+                    orderValueTrend: [
+                        { period: "Q2FY24", value1: 210 }
+                    ],
+                    ebitdaTrend: [
+                        { period: "Q2FY24", value1: 2950, value2: 12.7 }
+                    ],
+                    patTrend: [
+                        { period: "Q2FY24", value1: 2100 }
+                    ]
+                }
+            },
+            pocl: {
+                companyDetails: {
+                    name: "Pondy Oxides & Chemicals Ltd.",
+                    ticker: "POCL",
+                    sector: "Chemicals - Non Ferrous Metals",
+                    date: "22nd October, 2025",
+                    rating: "BUY",
+                    cmp: "Rs. 1,020",
+                    targetPrice: "Rs. 1,210",
+                    returnPercent: "+18.6%",
+                    stockType: "Small Cap",
+                    bloombergCode: "POCL:IN",
+                    nseCode: "POCL",
+                    bseCode: "532626",
+                    timeFrame: "12 Months",
+                    sensex: "80,450"
+                },
+                companyData: {
+                    marketCap: "1,180 cr",
+                    fiftyTwoWeekHighLow: "1240 - 450",
+                    enterpriseValue: "1,320 cr",
+                    outstandingShares: "1.16 cr",
+                    freeFloat: "51.2",
+                    dividendYield: "0.8%",
+                    sixMonthAverageVolume: "0.3m",
+                    beta: "1.3",
+                    faceValue: "10.0"
+                },
+                shareholding: {
+                    periodHeaders: ["Mar 31, 25", "Jun 30, 25", "Sep 30, 25"],
+                    promoters: ["48.8", "48.8", "48.8"],
+                    fiis: ["1.2", "1.5", "1.6"],
+                    mfs: ["3.5", "3.6", "3.8"],
+                    public: ["43.2", "42.9", "42.6"],
+                    others: ["3.3", "3.2", "3.2"],
+                    promoterPledge: ["Nil", "Nil", "Nil"]
+                },
+                pricePerformance: {
+                    periodHeaders: ["3 Month", "6 Month", "1 Year"],
+                    absoluteReturn: ["24.5%", "56.2%", "112.4%"],
+                    absoluteSensex: ["4.1%", "6.5%", "11.2%"],
+                    relativeReturn: ["20.4%", "49.7%", "101.2%"]
+                },
+                narrative: {
+                    title: "Capacity Addition in Lead Recycling & Favorable LME Pricing Drive Earnings Upside",
+                    summary: "Pondy Oxides & Chemicals Limited (POCL) is India's leading metallic oxides and plastic additives producer, specializing in secondary lead smelting and refining.",
+                    bullets: [
+                        "Q2FY26 Net revenues registered high growth of 28.4% YoY to Rs. 482cr with robust volumes in export markets.",
+                        "Lead smelting segment operated at 92% utilization rate following capacity de-bottlenecking at Pune and Chittoor facilities.",
+                        "EBITDA margins improved by 140bps YoY to 7.8% driven by high capacity utilization and premium alloy mix.",
+                        "Net Profit soared 45% YoY to Rs. 285 million on better inventory management cycles.",
+                        "Clean recycling initiatives are well poised to benefit from upcoming Battery Waste Management Rules."
+                    ]
+                },
+                outlookValuation: "Robust demand in automotive batteries combined with lead recycling regulations offers secular expansion tailwinds for POCL. Valuation remains attractive at 14x FY27E Adj EPS. We rate POCL as BUY with a target price of Rs. 1,210.",
+                yeMarchFinancials: {
+                    columns: ["FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Sales (cr)", values: ["1,640", "1,980", "2,420"] },
+                        { metric: "EBITDA Margin (%)", values: ["6.4", "7.1", "7.6"] },
+                        { metric: "PAT Adjusted (cr)", values: ["65", "88", "116"] }
+                    ]
+                },
+                quarterlyFinancials: {
+                    columns: ["Q2FY26", "Q2FY25", "YoY (%)", "Q1FY26", "QoQ (%)"],
+                    rows: [
+                        { metric: "Sales", values: ["482", "375", "28.4", "450", "7.1"] }
+                    ]
+                },
+                changeInEstimates: {
+                    columns: ["FY26E", "FY27E"],
+                    metrics: [
+                        { name: "Revenue (cr)", oldEstimates: ["1,890", "2,280"], newEstimates: ["1,980", "2,420"], changePercent: ["4.8", "6.1"] }
+                    ]
+                },
+                profitAndLoss: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Sales", values: ["1,240", "1,450", "1,640", "1,980", "2,420"] },
+                        { metric: "Reported PAT", values: ["42", "55", "65", "88", "116"] }
+                    ]
+                },
+                balanceSheet: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "Total Assets", values: ["480", "560", "640", "780", "920"] }
+                    ]
+                },
+                cashFlow: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "C.F. Operation", values: ["45", "62", "76", "92", "114"] }
+                    ]
+                },
+                ratios: {
+                    columns: ["FY23A", "FY24A", "FY25A", "FY26E", "FY27E"],
+                    rows: [
+                        { metric: "EBITDA margin (%)", values: ["5.8", "6.1", "6.4", "7.1", "7.6"] }
+                    ]
+                },
+                charts: {
+                    revenueTrend: [
+                        { period: "Q2FY24", value1: 340 },
+                        { period: "Q3FY24", value1: 360 }
+                    ],
+                    orderValueTrend: [
+                        { period: "Q2FY24", value1: 45 }
+                    ],
+                    ebitdaTrend: [
+                        { period: "Q2FY24", value1: 22, value2: 5.8 }
+                    ],
+                    patTrend: [
+                        { period: "Q2FY24", value1: 12 }
+                    ]
+                }
+            }
+        };
+
+        let currentData = PRELOADED_PROFILES.zomato;
+        let chartInstances = {};
+
+        // Switch Sheet View tabs
+        function switchTab(val) {
+            const tabs = ['all', 'page1', 'page2', 'page3', 'page4'];
+            tabs.forEach(t => {
+                document.getElementById('tab-' + t).className = "px-3 py-1.5 rounded-md hover:bg-gray-50";
+            });
+            document.getElementById('tab-' + val).className = "px-3 py-1.5 rounded-md bg-[#004B87] text-white";
+
+            const p1 = document.getElementById('page1');
+            const p2 = document.getElementById('page2');
+            const p3 = document.getElementById('page3');
+            const p4 = document.getElementById('page4');
+
+            if (val === 'all') {
+                p1.classList.remove('hidden');
+                p2.classList.remove('hidden');
+                p3.classList.remove('hidden');
+                p4.classList.remove('hidden');
+            } else {
+                p1.classList.add('hidden');
+                p2.classList.add('hidden');
+                p3.classList.add('hidden');
+                p4.classList.add('hidden');
+                document.getElementById(val).classList.remove('hidden');
+            }
+            
+            // Re-render charts on canvas elements to preserve layout scaling
+            setTimeout(renderPerformanceCharts, 100);
+        }
+
+        // Apply interactive tweaks instantly
+        function applyManualSync() {
+            const cmp = document.getElementById('override-cmp').value;
+            const target = document.getElementById('override-target').value;
+            const rating = document.getElementById('override-rating').value;
+
+            currentData.companyDetails.cmp = cmp;
+            currentData.companyDetails.targetPrice = target;
+            currentData.companyDetails.rating = rating;
+
+            // Recalculate potential returns
+            try {
+                const cmpVal = parseFloat(cmp.replace(/[^0-9.]/g, ''));
+                const targetVal = parseFloat(target.replace(/[^0-9.]/g, ''));
+                if (cmpVal && targetVal) {
+                    const diff = ((targetVal - cmpVal) / cmpVal) * 100;
+                    currentData.companyDetails.returnPercent = (diff >= 0 ? "+" : "") + diff.toFixed(1) + "%";
+                }
+            } catch (e) {}
+
+            renderData();
+        }
+
+        // Initialize UI Elements
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadProfile('zomato');
+            
+            // File input handle
+            const fileInput = document.getElementById('file-input');
+            const dropZone = document.getElementById('drop-zone');
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    handleSelectedFile(e.target.files[0]);
+                }
+            });
+
+            // Prevent browser defaults for drag drops
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => e.preventDefault(), false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleSelectedFile(e.dataTransfer.files[0]);
+                }
+            });
+        });
+
+        let loadedFile = null;
+        function handleSelectedFile(file) {
+            loadedFile = file;
+            document.getElementById('file-info').innerText = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            document.getElementById('file-info').classList.remove('hidden');
+            document.getElementById('drop-text').innerText = "File uploaded successfully";
+            
+            // enable process btn
+            const btn = document.getElementById('btn-process');
+            btn.disabled = false;
+            btn.className = "w-full py-3 bg-[#004B87] text-white rounded font-bold text-sm shadow-md hover:bg-[#003B6B] active:scale-95 transition-all flex items-center justify-center gap-2";
+        }
+
+        // Run Python Gemini analyze proxy pipeline
+        async function triggerAnalysis() {
+            if (!loadedFile) return;
+
+            const errorAlert = document.getElementById('error-alert');
+            errorAlert.classList.add('hidden');
+
+            const btn = document.getElementById('btn-process');
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> CALCULATING METRICS...`;
+            lucide.createIcons();
+
+            const reader = new FileReader();
+            reader.readAsDataURL(loadedFile);
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                const payload = {
+                    companyName: document.getElementById('input-company-name').value,
+                    fileBase64: base64,
+                    fileMimeType: loadedFile.type || "text/plain",
+                    fileName: loadedFile.name
+                };
+
+                try {
+                    const response = await fetch('/api/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const resJson = await response.json();
+                    if (!response.ok || !resJson.success) {
+                        throw new Error(resJson.error || "Failed to process research document. Please check your GEMINI_API_KEY.");
+                    }
+
+                    currentData = resJson.data;
+                    document.getElementById('override-cmp').value = currentData.companyDetails.cmp || "-";
+                    document.getElementById('override-target').value = currentData.companyDetails.targetPrice || "-";
+                    document.getElementById('override-rating').value = currentData.companyDetails.rating || "HOLD";
+
+                    renderData();
+                    loadedFile = null;
+                    document.getElementById('file-info').classList.add('hidden');
+                    document.getElementById('drop-text').innerText = "Drop or Click to Browse PDF/TXT/CSV";
+                    btn.disabled = true;
+                    btn.className = "w-full py-3 bg-gray-100 text-gray-400 cursor-not-allowed rounded font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2";
+                } catch (err) {
+                    errorAlert.innerText = err.message;
+                    errorAlert.classList.remove('hidden');
+                } finally {
+                    btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i> EXTRACT & COMPILE REPORT`;
+                    lucide.createIcons();
+                }
+            };
+        }
+
+        // Switch between default demo profiles
+        function loadProfile(name) {
+            const profiles = ['zomato', 'icici', 'jsw', 'ltts', 'pocl'];
+            profiles.forEach(p => {
+                const btn = document.getElementById('btn-' + p);
+                btn.className = "profile-btn px-3 py-2 text-xs rounded border border-gray-200 text-gray-700 hover:bg-gray-50 text-left transition-all col-span-2";
+                if (p !== 'pocl') {
+                    btn.className = "profile-btn px-3 py-2 text-xs rounded border border-gray-200 text-gray-700 hover:bg-gray-50 text-left transition-all";
+                }
+            });
+
+            const selectedBtn = document.getElementById('btn-' + name);
+            if (name === 'pocl') {
+                selectedBtn.className = "profile-btn px-3 py-2 text-xs rounded border text-left transition-all border-[#004B87] bg-[#F0F4F8] font-bold text-[#004B87] col-span-2";
+            } else {
+                selectedBtn.className = "profile-btn px-3 py-2 text-xs rounded border text-left transition-all border-[#004B87] bg-[#F0F4F8] font-bold text-[#004B87]";
+            }
+            
+            currentData = PRELOADED_PROFILES[name];
+            
+            // Sync Input indicators
+            document.getElementById('input-company-name').value = currentData.companyDetails.name;
+            document.getElementById('override-cmp').value = currentData.companyDetails.cmp;
+            document.getElementById('override-target').value = currentData.companyDetails.targetPrice;
+            document.getElementById('override-rating').value = currentData.companyDetails.rating;
+
+            renderData();
+        }
+
+        // Render full multi-page datasets
+        function renderData() {
+            // Company Details
+            document.getElementById('p1-company-name').innerText = currentData.companyDetails.name;
+            document.getElementById('p1-sector').innerText = `Sector: ${currentData.companyDetails.sector}`;
+            document.getElementById('p1-date').innerText = currentData.companyDetails.date;
+            document.getElementById('p1-rating').innerText = currentData.companyDetails.rating;
+            document.getElementById('p1-target').innerText = currentData.companyDetails.targetPrice;
+            document.getElementById('p1-cmp').innerText = currentData.companyDetails.cmp;
+            document.getElementById('p1-return').innerText = currentData.companyDetails.returnPercent;
+
+            document.getElementById('p1-tier').innerText = currentData.companyDetails.stockType || "Large Cap";
+            document.getElementById('p1-bloomberg').innerText = currentData.companyDetails.bloombergCode || "-";
+            document.getElementById('p1-sensex').innerText = currentData.companyDetails.sensex || "-";
+            document.getElementById('p1-nse').innerText = currentData.companyDetails.nseCode || "-";
+            document.getElementById('p1-bse').innerText = currentData.companyDetails.bseCode || "-";
+            document.getElementById('p1-horizon').innerText = currentData.companyDetails.timeFrame || "12 Months";
+
+            // Headers on later sheets
+            document.getElementById('p2-header-title').innerText = `${currentData.companyDetails.name} — Trend Analytics`;
+            document.getElementById('p3-header-title').innerText = `${currentData.companyDetails.name} — Master Balance & Statements`;
+            document.getElementById('p4-sign-date').innerText = currentData.companyDetails.date;
+
+            // Render Company Data table
+            let compHtml = '';
+            const dataOrder = [
+                { key: 'marketCap', label: 'Market Cap (Rs. cr)' },
+                { key: 'fiftyTwoWeekHighLow', label: '52 Week High - Low' },
+                { key: 'enterpriseValue', label: 'Enterprise Value' },
+                { key: 'outstandingShares', label: 'Outstanding Shares' },
+                { key: 'freeFloat', label: 'Free Float (%)' },
+                { key: 'dividendYield', label: 'Div. Yield (%)' },
+                { key: 'sixMonthAverageVolume', label: '6m Avg Volume' },
+                { key: 'beta', label: 'Beta' },
+                { key: 'faceValue', label: 'Face Value (Rs)' }
+            ];
+            dataOrder.forEach(item => {
+                compHtml += `
+                    <tr>
+                        <td class="py-1 text-gray-400 text-[8.5px] uppercase font-mono">${item.label}</td>
+                        <td class="py-1 text-right text-gray-800 font-bold font-mono">${currentData.companyData[item.key] || "-"}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('p1-company-table').innerHTML = compHtml;
+
+            // Shareholding headers & data loading
+            const sh = currentData.shareholding;
+            document.getElementById('p1-sh-h1').innerText = sh.periodHeaders[0] || "-";
+            document.getElementById('p1-sh-h2').innerText = sh.periodHeaders[1] || "-";
+            document.getElementById('p1-sh-h3').innerText = sh.periodHeaders[2] || "-";
+
+            const shRows = [
+                { label: 'Promoters', key: 'promoters' },
+                { label: 'FIIs', key: 'fiis' },
+                { label: 'MFs/Inst.', key: 'mfs' },
+                { label: 'Public', key: 'public' },
+                { label: 'Others', key: 'others' },
+                { label: 'Pledge', key: 'promoterPledge', isBold: true, isRed: true }
+            ];
+            let shHtml = '';
+            shRows.forEach(row => {
+                const val1 = sh[row.key] ? sh[row.key][0] : "-";
+                const val2 = sh[row.key] ? sh[row.key][1] : "-";
+                const val3 = sh[row.key] ? sh[row.key][2] : "-";
+                shHtml += `
+                    <tr class="${row.isBold ? 'font-bold border-t border-gray-200' : ''}">
+                        <td class="py-1 text-left text-gray-500">${row.label}</td>
+                        <td class="py-1 font-mono">${val1}</td>
+                        <td class="py-1 font-mono">${val2}</td>
+                        <td class="py-1 font-mono ${row.isRed ? 'text-red-600' : ''}">${val3}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('p1-sh-table').innerHTML = shHtml;
+
+            // Price Performance
+            const pp = currentData.pricePerformance;
+            document.getElementById('p1-pp-h1').innerText = pp.periodHeaders[0] || "3M";
+            document.getElementById('p1-pp-h2').innerText = pp.periodHeaders[1] || "6M";
+            document.getElementById('p1-pp-h3').innerText = pp.periodHeaders[2] || "1Y";
+
+            let ppHtml = `
+                <tr>
+                    <td class="py-1 text-left text-gray-500">Absolute Return</td>
+                    <td class="py-1 font-mono text-emerald-600 font-bold">${pp.absoluteReturn[0]}</td>
+                    <td class="py-1 font-mono text-emerald-600 font-bold">${pp.absoluteReturn[1]}</td>
+                    <td class="py-1 font-mono text-emerald-600 font-bold">${pp.absoluteReturn[2]}</td>
+                </tr>
+                <tr>
+                    <td class="py-1 text-left text-gray-500">Benchmark Index</td>
+                    <td class="py-1 font-mono">${pp.absoluteSensex[0]}</td>
+                    <td class="py-1 font-mono">${pp.absoluteSensex[1]}</td>
+                    <td class="py-1 font-mono">${pp.absoluteSensex[2]}</td>
+                </tr>
+                <tr class="font-bold border-t border-gray-200 bg-teal-50/20 text-[#004B87]">
+                    <td class="py-1 text-left">Relative Return</td>
+                    <td class="py-1 font-mono">${pp.relativeReturn[0]}</td>
+                    <td class="py-1 font-mono">${pp.relativeReturn[1]}</td>
+                    <td class="py-1 font-mono">${pp.relativeReturn[2]}</td>
+                </tr>
+            `;
+            document.getElementById('p1-pp-table').innerHTML = ppHtml;
+
+            // Narrative Summary
+            document.getElementById('p1-narrative-title').innerText = currentData.narrative.title;
+            document.getElementById('p1-narrative-summary').innerText = currentData.narrative.summary;
+            
+            let bulletsHtml = '';
+            currentData.narrative.bullets.forEach(bullet => {
+                bulletsHtml += `
+                    <li class="text-[9.5px] leading-snug text-gray-700 flex items-start gap-1.5 text-justify">
+                        <span class="w-1.5 h-1.5 bg-[#004B87] rounded-full mt-1.5 shrink-0"></span>
+                        <span>${bullet}</span>
+                    </li>
+                `;
+            });
+            document.getElementById('p1-bullets').innerHTML = bulletsHtml;
+            document.getElementById('p1-outlook').innerText = currentData.outlookValuation;
+
+            // Quarterly Financials
+            const qf = currentData.quarterlyFinancials;
+            let qfHeaders = '<th class="text-left py-0.5">Metric</th>';
+            qf.columns.forEach(col => {
+                qfHeaders += `<th class="py-0.5">${col}</th>`;
+            });
+            document.getElementById('p1-q-headers').innerHTML = qfHeaders;
+
+            let qfHtml = '';
+            qf.rows.forEach(row => {
+                const totalVals = row.values.map(v => `<td class="py-0.5 font-mono">${v}</td>`).join('');
+                const isHighlight = row.metric.toLowerCase() === 'sales' || row.metric.toLowerCase().includes('pat');
+                qfHtml += `
+                    <tr class="${isHighlight ? 'bg-slate-50 font-bold text-gray-900' : ''}">
+                        <td class="py-0.5 text-left text-gray-500 font-semibold truncate">${row.metric}</td>
+                        ${totalVals}
+                    </tr>
+                `;
+            });
+            document.getElementById('p1-q-table').innerHTML = qfHtml;
+
+            // Consolidated March Financials
+            const mf = currentData.yeMarchFinancials;
+            let mfHeaders = '<th class="text-left py-0.5">Metric</th>';
+            mf.columns.forEach(col => {
+                mfHeaders += `<th class="py-0.5">${col}</th>`;
+            });
+            document.getElementById('p1-march-headers').innerHTML = mfHeaders;
+
+            let mfHtml = '';
+            const keyMarchMetrics = ['sales', 'ebitda', 'pat adjusted', 'p/e', 'roe'];
+            mf.rows.forEach(row => {
+                const matchesKey = keyMarchMetrics.some(k => row.metric.toLowerCase().startsWith(k));
+                if (matchesKey || name !== 'zomato') { // always show for custom data
+                    const totalVals = row.values.map(v => `<td class="py-0.5 font-mono">${v}</td>`).join('');
+                    const isTotal = row.metric.toLowerCase().startsWith('sales') || row.metric.toLowerCase().includes('pat adjusted');
+                    mfHtml += `
+                        <tr class="${isTotal ? 'bg-slate-50 font-bold text-gray-900' : ''}">
+                            <td class="py-0.5 text-left text-gray-500 font-semibold truncate">${row.metric}</td>
+                            ${totalVals}
+                        </tr>
+                    `;
+                }
+            });
+            document.getElementById('p1-march-table').innerHTML = mfHtml;
+
+            // Page 2: Change in estimates Old vs New
+            const est = currentData.changeInEstimates;
+            let estHeaders = '<th class="text-left py-1"></th>';
+            est.columns.forEach(col => estHeaders += `<th class="border-l border-gray-100">${col}</th>`);
+            est.columns.forEach(col => estHeaders += `<th class="border-l border-gray-100">${col}</th>`);
+            est.columns.forEach(col => estHeaders += `<th class="border-l border-[#004B87]/15">${col}</th>`);
+            document.getElementById('p2-est-subheaders').innerHTML = estHeaders;
+
+            let estHtml = '';
+            est.metrics.forEach(row => {
+                let oldVals = row.oldEstimates.map(v => `<td class="py-1 border-l border-gray-50 font-mono">${v}</td>`).join('');
+                let newVals = row.newEstimates.map(v => `<td class="py-1 border-l border-gray-50 font-mono font-bold text-gray-900">${v}</td>`).join('');
+                let chgVals = row.changePercent.map(v => {
+                    const isNeg = v.startsWith('-');
+                    return `<td class="py-1 border-l border-teal-50 font-mono ${isNeg ? 'text-red-500' : 'text-emerald-700'} font-bold">${v}%</td>`;
+                }).join('');
+
+                estHtml += `
+                    <tr class="hover:bg-[#FAFAF9]">
+                        <td class="text-left py-1.5 text-gray-500 font-bold font-mono text-[8px] uppercase">${row.name}</td>
+                        ${oldVals}
+                        ${newVals}
+                        ${chgVals}
+                    </tr>
+                `;
+            });
+            document.getElementById('p2-est-table').innerHTML = estHtml;
+
+            // Page 3 Tables loader
+            renderFiveYearTable('profitAndLoss', 'p3-pl-headers', 'p3-pl-table');
+            renderFiveYearTable('balanceSheet', 'p3-bs-headers', 'p3-bs-table');
+            renderFiveYearTable('cashFlow', 'p3-cf-headers', 'p3-cf-table');
+            renderFiveYearTable('ratios', 'p3-r-headers', 'p3-r-table');
+
+            // Render Charts
+            renderPerformanceCharts();
+        }
+
+        // Helper render 5 year columns
+        function renderFiveYearTable(apiId, headerId, tableId) {
+            const tableObj = currentData[apiId];
+            if (!tableObj) return;
+
+            let headerHtml = '<th class="text-left py-0.5">Y.E March</th>';
+            tableObj.columns.forEach(col => headerHtml += `<th class="py-0.5 font-mono">${col}</th>`);
+            document.getElementById(headerId).innerHTML = headerHtml;
+
+            let bodyHtml = '';
+            tableObj.rows.forEach(row => {
+                const totalVals = row.values.map(v => `<td class="py-0.5 font-mono">${v}</td>`).join('');
+                const mNorm = row.metric.toLowerCase();
+                const isHighlight = mNorm === 'sales' || mNorm === 'ebitda' || mNorm === 'reported pat' || mNorm === 'total assets' || mNorm === 'total liabilities' || mNorm === 'c.f. operation' || mNorm.startsWith('ebitda margin');
+                
+                bodyHtml += `
+                    <tr class="${isHighlight ? 'bg-slate-50 font-bold text-gray-900' : ''}">
+                        <td class="py-0.5 text-left text-gray-500 font-semibold truncate max-w-[110px]">${row.metric}</td>
+                        ${totalVals}
+                    </tr>
+                `;
+            });
+            document.getElementById(tableId).innerHTML = bodyHtml;
+        }
+
+        // Render Canvas Charts using standard Chart.js (looks amazing and scales beautifully!)
+        function renderPerformanceCharts() {
+            // Drop previous charts instances if existing
+            ['revenue', 'gov', 'ebitda', 'pat'].forEach(id => {
+                if (chartInstances[id]) {
+                    chartInstances[id].destroy();
+                }
+            });
+
+            const data = currentData.charts;
+            if (!data) return;
+
+            // Revenue Trend Chart
+            const revCtx = document.getElementById('chart-revenue').getContext('2d');
+            chartInstances.revenue = new Chart(revCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.revenueTrend.map(pt => pt.period),
+                    datasets: [{
+                        label: 'Sales (Cr)',
+                        data: data.revenueTrend.map(pt => pt.value1),
+                        backgroundColor: '#004B87',
+                        borderWidth: 0,
+                        borderRadius: 2
+                    }]
+                },
+                options: getChartOptions()
+            });
+
+            // GOV Trend Chart
+            const govCtx = document.getElementById('chart-gov').getContext('2d');
+            chartInstances.gov = new Chart(govCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.orderValueTrend.map(pt => pt.period),
+                    datasets: [{
+                        label: 'Order Val',
+                        data: data.orderValueTrend.map(pt => pt.value1),
+                        backgroundColor: '#2ECC71',
+                        borderWidth: 0,
+                        borderRadius: 2
+                    }]
+                },
+                options: getChartOptions()
+            });
+
+            // EBITDA Trend Chart
+            const ebitdaCtx = document.getElementById('chart-ebitda').getContext('2d');
+            chartInstances.ebitda = new Chart(ebitdaCtx, {
+                type: 'line',
+                data: {
+                    labels: data.ebitdaTrend.map(pt => pt.period),
+                    datasets: [
+                        {
+                            label: 'EBITDA',
+                            data: data.ebitdaTrend.map(pt => pt.value1),
+                            borderColor: '#004B87',
+                            borderWidth: 1.5,
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Margin %',
+                            data: data.ebitdaTrend.map(pt => pt.value2 || 0),
+                            borderColor: '#2ECC71',
+                            borderWidth: 1,
+                            fill: false,
+                            tension: 0.1,
+                            pointRadius: 2
+                        }
+                    ]
+                },
+                options: getChartOptions(true)
+            });
+
+            // PAT Trend Chart
+            const patCtx = document.getElementById('chart-pat').getContext('2d');
+            chartInstances.pat = new Chart(patCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.patTrend.map(pt => pt.period),
+                    datasets: [{
+                        label: 'PAT (Cr)',
+                        data: data.patTrend.map(pt => pt.value1),
+                        backgroundColor: '#004B87',
+                        borderWidth: 0,
+                        borderRadius: 2
+                    }]
+                },
+                options: getChartOptions()
+            });
+        }
+
+        function getChartOptions(hasLegend = false) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: hasLegend,
+                        labels: { boxWidth: 6, font: { size: 7 } }
+                    }
+                },
+                scales: {
+                    x: { ticks: { font: { size: 7, family: 'JetBrains Mono' } }, grid: { display: false } },
+                    y: { ticks: { font: { size: 7, family: 'JetBrains Mono' } }, grid: { borderDash: [2, 2], color: '#E2E8F0' } }
+                }
+            };
+        }
+
+        // Multi-page jsPDF + html2canvas blueprint compiler at 2.0 scale for retina vector sharp output
+        async function compilePDF() {
+            const btn = document.getElementById('pdf-trigger');
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> GENERATING PDF...`;
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF("p", "pt", "a4");
+                const pageIds = ["page1", "page2", "page3", "page4"];
+
+                for (let i = 0; i < pageIds.length; i++) {
+                    const pageEle = document.getElementById(pageIds[i]);
+                    
+                    // Temp unhide if they are hidden in current single screen views
+                    const wasHidden = pageEle.classList.contains('hidden');
+                    if (wasHidden) {
+                        pageEle.classList.remove('hidden');
+                    }
+
+                    const canvas = await html2canvas(pageEle, {
+                        scale: 2, // 2.0 retina sharp scaling
+                        useCORS: true,
+                        backgroundColor: '#FFFFFF',
+                        logging: false
+                    });
+
+                    // restore view state
+                    if (wasHidden) {
+                        pageEle.classList.add('hidden');
+                    }
+
+                    const imgData = canvas.toDataURL("image/png");
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                    if (i > 0) {
+                        pdf.addPage();
+                    }
+                    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+                }
+
+                pdf.save(`Geojit_Services_Research_${currentData.companyDetails.name.replace(/\s+/g, '_')}.pdf`);
+            } catch (err) {
+                console.error("PDF Compiling crashed:", err);
+                alert("Failed to render sharp PDF vector compilation. Printing screen as alternative.");
+            } finally {
+                btn.innerHTML = `<i data-lucide="download" class="w-4 h-4"></i> DOWNLOAD PDF REPORT`;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+    </script>
+</body>
+</html>
