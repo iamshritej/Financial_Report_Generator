@@ -10,6 +10,11 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
+<<<<<<< HEAD
+=======
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+>>>>>>> da73ab59cb5a6806564e9628c1b2bfae797d0e15
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",

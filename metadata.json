@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "name": "Financial Research Report Generator",
   "description": "An interactive web application that extracts key financial metrics from uploaded context documents and generates a downloadable, Geojit-styled PDF research report.",
+=======
+  "name": "Financial Report Template Builder",
+  "description": "Extracts financial context documents and produces downloadable research reports matching Geojit-style formats.",
+>>>>>>> da73ab59cb5a6806564e9628c1b2bfae797d0e15
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

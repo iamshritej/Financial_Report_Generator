@@ -6,9 +6,12 @@ coverage/
 *.log
 .env*
 !.env.example
+<<<<<<< HEAD
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .project
 .vscode/
+=======
+>>>>>>> da73ab59cb5a6806564e9628c1b2bfae797d0e15
